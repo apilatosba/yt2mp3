@@ -118,9 +118,9 @@ namespace YoutubeMusicDownloader {
          tasks.Clear();
 
          // Convert videos to audio parallelly
-         var files = Directory.GetFiles(videoSaveDirectory);
-         for (int i = 0; i < files.Length; i++) {
-            Task audioTask = VideoToAudio(files[i], audioSaveDirectory, i);
+         var videoFiles = Directory.GetFiles(videoSaveDirectory, "*.mp4");
+         for (int i = 0; i < videoFiles.Length; i++) {
+            Task audioTask = VideoToAudio(videoFiles[i], audioSaveDirectory, i);
             tasks.Add(audioTask);
 
             progressTextsAudio.Add($"[{new string('.', 50)}] 0.00%");
@@ -299,7 +299,6 @@ namespace YoutubeMusicDownloader {
             // Do nothing ie. keep it as it is.
          }
       }
-
       static void PrintHelp() {
          Console.WriteLine("Usage: yt2mp3 [-h | --help] [-u urlsPath] [-v videoSaveDirectory] [-a audioSaveDirectory] [--keep-videos] [--no-download]");
          Console.WriteLine("-h: Help");
