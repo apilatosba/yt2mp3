@@ -33,8 +33,8 @@ namespace YoutubeMusicDownloader {
       /// <summary>
       /// This is a parallel list to <see cref="downloadStatuses"/>
       /// </summary>
-      static List<string> progressTextsVideo = new List<string>();
-      static List<string> progressTextsAudio = new List<string>();
+      static volatile List<string> progressTextsVideo = new List<string>();
+      static volatile List<string> progressTextsAudio = new List<string>();
       static bool isRenderProgressTextCancelled = false;
 
       public static async Task Main(string[] args) {
