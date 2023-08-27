@@ -25,6 +25,7 @@ namespace YoutubeMusicDownloader {
       static Func<string, Task<YouTubeVideo>> GetResourceMethod = GetAudioWithHighestQuality;
       static volatile List<string> progressTextsDownload = new List<string>();
 
+      // TODO create a logger
       public static async Task Main(string[] args) {
          // Set default save directory
          try {
@@ -48,6 +49,7 @@ namespace YoutubeMusicDownloader {
                      GetResourceMethod = GetAudioWithHighestQuality;
                   } else if (args[i + 1].ToLower() == "video") {
                      downloadMode = DownloadMode.Video;
+                     GetResourceMethod = GetVideoWithHighestQuality;
                   } else {
                      Console.WriteLine($"ERROR: Invalid download mode: {args[i + 1]}");
                      PrintHelp();
@@ -111,7 +113,7 @@ namespace YoutubeMusicDownloader {
             var resource = await getResourceTasks[i];
             if (resource == null) {
                lock (progressTextsDownload) { // Lock is not necessary but it is good practice.
-                  progressTextsDownload[i] = $"ERROR: Your url is invalid. Url order in urls file: {i}(zero-indexed). The url: {urls[i]}.";
+                  progressTextsDownload[i] = $"ERROR: Your url is invalid or youtube refuses to respond. Url order in urls file: {i}(zero-indexed). The url: {urls[i]}.";
                }
             } else {
                resources.Add(resource);
@@ -200,7 +202,7 @@ namespace YoutubeMusicDownloader {
       /// <summary>
       /// 
       /// </summary>
-      /// <param name="uri"></param>
+      /// <param name="uri">This uri is the uri that shows up in the search bar.</param>
       /// <returns>null if url is invalid</returns>
       async static Task<YouTubeVideo> GetAudioWithHighestQuality(string uri) {
          var youtube = YouTube.Default;
@@ -213,13 +215,72 @@ namespace YoutubeMusicDownloader {
             return null;
          }
 
-         YouTubeVideo highestQualityAudio;
+         YouTubeVideo highestQualityAudio = null;
+         try {
+            highestQualityAudio = videos.Where(v => v.AudioFormat == AudioFormat.Opus).OrderByDescending(v => v.AudioBitrate).First();
+         } catch (InvalidOperationException) { 
+            // If there is no Opus audio, it throws InvalidOperationException. So we catch it and do nothing.
+         }
+   
+         try {
+            highestQualityAudio ??= videos.Where(v => v.AudioFormat == AudioFormat.Aac).OrderByDescending(v => v.AudioBitrate).First();
+         }
+         catch (InvalidOperationException) {
+            // If there is no Aac audio, it throws InvalidOperationException. So we catch it and do nothing.
+         }
 
-         highestQualityAudio = videos.Where(v => v.AudioFormat == AudioFormat.Opus).OrderByDescending(v => v.AudioBitrate).First();
-         highestQualityAudio ??= videos.Where(v => v.AudioFormat == AudioFormat.Aac).OrderByDescending(v => v.AudioBitrate).First();
-         highestQualityAudio ??= videos.Where(v => v.AudioFormat == AudioFormat.Vorbis).OrderByDescending(v => v.AudioBitrate).First();
+         try {
+            highestQualityAudio ??= videos.Where(v => v.AudioFormat == AudioFormat.Vorbis).OrderByDescending(v => v.AudioBitrate).First();
+         }
+         catch (InvalidOperationException) {
+            // If there is no Vorbis audio, it throws InvalidOperationException. So we catch it and do nothing.
+         }
+
+         try {
+            highestQualityAudio ??= videos.Where(v => v.AudioFormat == AudioFormat.Unknown).OrderByDescending(v => v.AudioBitrate).First();
+         }
+         catch (InvalidOperationException) {
+            // If there is no audio, it throws InvalidOperationException. So we catch it and do nothing.
+         }
+
 
          return highestQualityAudio;
+      }
+
+      /// <summary>
+      /// 
+      /// </summary>
+      /// <param name="uri">This uri is the uri that shows up in the search bar.</param>
+      /// <returns>null if url is invalid</returns>
+      async static Task<YouTubeVideo> GetVideoWithHighestQuality(string uri) {
+         var youtube = YouTube.Default;
+
+         IEnumerable<YouTubeVideo> videos;
+         try {
+            videos = await youtube.GetAllVideosAsync(uri);
+         }
+         catch (Exception e) when (e is UnavailableStreamException || e is ArgumentException) {
+            return null;
+         }
+
+         YouTubeVideo highestQualityVideo = null;
+
+         try {
+            highestQualityVideo = videos.Where(v => v.Format == VideoFormat.Mp4).OrderByDescending(v => v.Resolution).First();
+         }
+         catch (InvalidOperationException) {
+            // If there is no mp4 video, it throws InvalidOperationException. So we catch it and do nothing.
+         }
+
+         try {
+            highestQualityVideo ??= videos.OrderByDescending(v => v.Resolution).First();
+         }
+         catch (InvalidOperationException) {
+            // If there is no mp4 video, it throws InvalidOperationException. So we catch it and do nothing.
+         }
+
+
+         return highestQualityVideo;
       }
 
       /// <summary>
