@@ -69,6 +69,15 @@ namespace YoutubeMusicDownloader {
                   saveDirectory = args[i + 1];
                   i++;
                   break;
+               case "--uri":
+                  var v = downloadMode switch {
+                     DownloadMode.Audio => await GetAudioWithHighestQuality(args[i + 1]),
+                     DownloadMode.Video => await GetVideoWithHighestQuality(args[i + 1]),
+                     DownloadMode.Unknown => null,
+                     _ => null,
+                  };
+                  await Console.Out.WriteLineAsync($"{v.Uri}");
+                  return;
                default:
                   Console.WriteLine($"ERROR: Invalid flag: {args[i]}");
                   PrintHelp();
@@ -353,11 +362,12 @@ namespace YoutubeMusicDownloader {
       }
 
       static void PrintHelp() {
-         Console.WriteLine("Usage: yt2mp3 [-h | --help] [-d <audio | video>] [-u <path-to-urls-file>] [-s <path-to-save-directory>]");
+         Console.WriteLine("Usage: yt2mp3 [-h | --help] [-d audio | video] [-u <path-to-urls-file>] [-s <path-to-save-directory>] [--uri <url>]");
          Console.WriteLine("-h: Print this help");
          Console.WriteLine("-d, --download-mode: Download mode. Can be either audio or video. Default is audio.");
          Console.WriteLine("-u, --urls-path: Path to urls file. Default is urls.txt. Format is one url per line. Urls in this file will be downloaded when program runs.");
          Console.WriteLine("-s, --save-directory: Path to the directory to save the files. Default is Downloads folder");
+         Console.WriteLine("--uri: Gets the internal youtube uri of the video/audio of given url. -d must precede this flag if -d is used otherwise -d has no effect. So, in order to get video type \"yt2mp3 -d video --uri <url>\"");
       }
    }
 
