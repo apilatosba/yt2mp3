@@ -1,5 +1,13 @@
 # yt2mp3  
 This is a cli app to download musics from youtube without using youtube data api.
+## Quick start
+Get binaries from release section.  
+Put them inside of a folder included by your PATH environment variable.  
+Have a urls.txt file which you have youtube urls. One url per line.
+```cmd
+yt2mp3
+```
+Mp3 files wil be downloaded to ./Audios.
 ## How to run
 You can use it directly typing dotnet run and you can pass the command line arguments like this
 ```cmd
