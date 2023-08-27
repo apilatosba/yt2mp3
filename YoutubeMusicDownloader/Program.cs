@@ -26,6 +26,10 @@ namespace YoutubeMusicDownloader {
       static volatile List<string> progressTextsDownload = new List<string>();
 
       // TODO create a logger
+      // TODO make it faster. 
+      //    change receive buffer size
+      //    look at video.Uri with browser network tab
+      // TODO videos has no audio
       public static async Task Main(string[] args) {
          // Set default save directory
          try {
@@ -126,7 +130,7 @@ namespace YoutubeMusicDownloader {
          for (int i = 0; i < resources.Count; i++) {
             progressTextsDownload.Add($"[{new string('.', 50)}] 0.00%");
 
-            Task @download = DownloadYoutubeResource(resources[i], saveDirectory, i, progressTextsDownload);
+            Task @download = DownloadYoutubeResource(resources[i], downloadMode, saveDirectory, i, progressTextsDownload);
             downloadResourceTasks.Add(@download);
          }
 
@@ -144,13 +148,19 @@ namespace YoutubeMusicDownloader {
          Console.WriteLine("Succesfully finished");
       }
 
-      async static Task DownloadYoutubeResource(YouTubeVideo resource, string saveDirectoryPath, int index, List<string> progressTexts) {
+      async static Task DownloadYoutubeResource(YouTubeVideo resource, DownloadMode downloadMode, string saveDirectoryPath, int index, List<string> progressTexts) {
          if (!Directory.Exists(saveDirectoryPath))
             Directory.CreateDirectory(saveDirectoryPath);
 
          using HttpClient client = new HttpClient();
          long totalByte;
-         string outputFilePath = $"{saveDirectoryPath}/{resource.Title}{(string.IsNullOrEmpty(resource.FileExtension) ? "" : $".{resource.FileExtension}")}";
+         string defaultFileExtension = downloadMode switch {
+            DownloadMode.Audio => ".mp3",
+            DownloadMode.Video => ".mp4",
+            DownloadMode.Unknown => "",
+            _ => "",
+         };
+         string outputFilePath = $"{saveDirectoryPath}/{resource.Title}{(string.IsNullOrEmpty(resource.FileExtension) ? defaultFileExtension : $"{resource.FileExtension}")}";
 
          using Stream outputStream = File.OpenWrite(outputFilePath);
          using var request = new HttpRequestMessage(HttpMethod.Head, resource.Uri);
@@ -377,6 +387,7 @@ namespace YoutubeMusicDownloader {
 
    public enum DownloadMode {
       Audio,
-      Video
+      Video,
+      Unknown
    }
 }
