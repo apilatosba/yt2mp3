@@ -225,32 +225,10 @@ namespace YoutubeMusicDownloader {
 
          YouTubeVideo highestQualityAudio = null;
          try {
-            highestQualityAudio = videos.Where(v => v.AudioFormat == AudioFormat.Opus).OrderByDescending(v => v.AudioBitrate).First();
-         } catch (InvalidOperationException) { 
-            // If there is no Opus audio, it throws InvalidOperationException. So we catch it and do nothing.
-         }
-   
-         try {
-            highestQualityAudio ??= videos.Where(v => v.AudioFormat == AudioFormat.Aac).OrderByDescending(v => v.AudioBitrate).First();
-         }
-         catch (InvalidOperationException) {
-            // If there is no Aac audio, it throws InvalidOperationException. So we catch it and do nothing.
-         }
-
-         try {
-            highestQualityAudio ??= videos.Where(v => v.AudioFormat == AudioFormat.Vorbis).OrderByDescending(v => v.AudioBitrate).First();
-         }
-         catch (InvalidOperationException) {
-            // If there is no Vorbis audio, it throws InvalidOperationException. So we catch it and do nothing.
-         }
-
-         try {
-            highestQualityAudio ??= videos.Where(v => v.AudioFormat == AudioFormat.Unknown).OrderByDescending(v => v.AudioBitrate).First();
-         }
-         catch (InvalidOperationException) {
+            highestQualityAudio = videos.OrderByDescending(v => v.AudioBitrate).First();
+         } catch (InvalidOperationException) {
             // If there is no audio, it throws InvalidOperationException. So we catch it and do nothing.
          }
-
 
          return highestQualityAudio;
       }
