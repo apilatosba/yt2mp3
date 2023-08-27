@@ -25,8 +25,6 @@ namespace YoutubeMusicDownloader {
       static Func<string, Task<YouTubeVideo>> GetResourceMethod = GetAudioWithHighestQuality;
       static volatile List<string> progressTextsDownload = new List<string>();
 
-      // TODO create a logger
-      // TODO some videos dont have audio
       public static async Task Main(string[] args) {
          // Set default save directory
          try {
@@ -258,7 +256,7 @@ namespace YoutubeMusicDownloader {
       }
 
       /// <summary>
-      /// 
+      /// It gets highest quality video that has audio but there could be higher quality video without audio.
       /// </summary>
       /// <param name="uri">This uri is the uri that shows up in the search bar.</param>
       /// <returns>null if url is invalid</returns>
@@ -276,14 +274,14 @@ namespace YoutubeMusicDownloader {
          YouTubeVideo highestQualityVideo = null;
 
          try {
-            highestQualityVideo = videos.Where(v => v.Format == VideoFormat.Mp4).OrderByDescending(v => v.Resolution).First();
+            highestQualityVideo = videos.Where(v => v.Format == VideoFormat.Mp4 && v.AudioFormat != AudioFormat.Unknown).OrderByDescending(v => v.Resolution).First();
          }
          catch (InvalidOperationException) {
             // If there is no mp4 video, it throws InvalidOperationException. So we catch it and do nothing.
          }
 
          try {
-            highestQualityVideo ??= videos.OrderByDescending(v => v.Resolution).First();
+            highestQualityVideo ??= videos.OrderByDescending(v => v.Resolution).First(v => v.AudioFormat != AudioFormat.Unknown);
          }
          catch (InvalidOperationException) {
             // If there is no mp4 video, it throws InvalidOperationException. So we catch it and do nothing.
