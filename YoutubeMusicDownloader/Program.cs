@@ -26,14 +26,14 @@ namespace YoutubeMusicDownloader {
       static volatile List<string> progressTextsDownload = new List<string>();
 
       // TODO create a logger
-      // TODO make it faster. 
-      //    change receive buffer size
-      //    look at video.Uri with browser network tab
-      // TODO videos has no audio
+      // TODO some videos dont have audio
       public static async Task Main(string[] args) {
          // Set default save directory
          try {
             saveDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "/Downloads"; // ~/Downloads
+
+            if(!Directory.Exists(saveDirectory))
+               saveDirectory = "./Downloads";
          }
          catch (Exception) {
             saveDirectory = "./Downloads";
@@ -184,7 +184,7 @@ namespace YoutubeMusicDownloader {
                return;
             }
          }
-
+         
          byte[] buffer = new byte[128 * 1024]; // 128KB buffer
          int read;
          long totalRead = 0;
