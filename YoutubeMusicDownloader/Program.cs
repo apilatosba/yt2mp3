@@ -29,10 +29,9 @@ namespace YoutubeMusicDownloader {
       public static async Task Main(string[] args) {
          // Set default save directory
          try {
-            saveDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "/Downloads"; // ~/Downloads
+            string downloadsFolder = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "/Downloads"; // ~/Downloads
 
-            if(!Directory.Exists(saveDirectory))
-               saveDirectory = "./Downloads";
+            saveDirectory = Directory.Exists(downloadsFolder) ? downloadsFolder + "/Audios" : "./Downloads";
          }
          catch (Exception) {
             saveDirectory = "./Downloads";
