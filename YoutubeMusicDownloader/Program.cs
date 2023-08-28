@@ -76,7 +76,7 @@ namespace YoutubeMusicDownloader {
                      DownloadMode.Unknown => null,
                      _ => null,
                   };
-                  await Console.Out.WriteLineAsync($"{v.Uri}");
+                  await Console.Out.WriteLineAsync($"{(v == null ? "ERROR: Not a valid youtube url or youtube refuses to respond." : v.Uri)}");
                   return;
                default:
                   Console.WriteLine($"ERROR: Invalid flag: {args[i]}");
