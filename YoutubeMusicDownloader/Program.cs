@@ -163,7 +163,7 @@ namespace YoutubeMusicDownloader {
          using HttpClient client = new HttpClient();
          long totalByte;
          string defaultFileExtension = downloadMode switch {
-            DownloadMode.Audio => ".mp3",
+            DownloadMode.Audio => ".m4a",
             DownloadMode.Video => ".mp4",
             DownloadMode.Unknown => "",
             _ => "",
