@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using VideoLibrary;
 using VideoLibrary.Exceptions;
@@ -70,13 +71,13 @@ namespace YoutubeMusicDownloader {
                   i++;
                   break;
                case "--uri":
-                  var v = downloadMode switch {
+                  var resource = downloadMode switch {
                      DownloadMode.Audio => await GetAudioWithHighestQuality(args[i + 1]),
                      DownloadMode.Video => await GetVideoWithHighestQuality(args[i + 1]),
                      DownloadMode.Unknown => null,
                      _ => null,
                   };
-                  await Console.Out.WriteLineAsync($"{(v == null ? "ERROR: Not a valid youtube url or youtube refuses to respond." : v.Uri)}");
+                  await Console.Out.WriteLineAsync($"{(resource == null ? "ERROR: Not a valid youtube url or youtube refuses to respond." : resource.Uri)}");
                   return;
                default:
                   Console.WriteLine($"ERROR: Invalid flag: {args[i]}");
@@ -167,7 +168,7 @@ namespace YoutubeMusicDownloader {
             DownloadMode.Unknown => "",
             _ => "",
          };
-         string outputFilePath = $"{saveDirectoryPath}/{resource.Title}{(string.IsNullOrEmpty(resource.FileExtension) ? defaultFileExtension : $"{resource.FileExtension}")}";
+         string outputFilePath = $"{saveDirectoryPath}/{RemoveInvalidFileNameChars(resource.Title)}{(string.IsNullOrEmpty(resource.FileExtension) ? defaultFileExtension : $"{resource.FileExtension}")}";
 
          using Stream outputStream = File.OpenWrite(outputFilePath);
          using var request = new HttpRequestMessage(HttpMethod.Head, resource.Uri);
@@ -214,6 +215,12 @@ namespace YoutubeMusicDownloader {
             }
          }
          readStream.Dispose();
+      }
+
+      static string RemoveInvalidFileNameChars(string fileName) {
+         string invalidChars = new string(Path.GetInvalidFileNameChars()) + new string(Path.GetInvalidPathChars());
+         Regex invalidCharRegex = new Regex($"[{Regex.Escape(invalidChars)}]");
+         return invalidCharRegex.Replace(fileName, "_");
       }
 
       /// <summary>
