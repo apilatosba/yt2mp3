@@ -18,8 +18,10 @@ namespace YoutubeMusicDownloader {
       /// </summary>
       static string urlsPath = "urls.txt";
       static bool isRenderProgressTextCancelled = false;
+      static bool isPlainMode = false;
       static DownloadMode downloadMode = DownloadMode.Audio;
       static string saveDirectory;
+      static string urlInPlainMode;
       /// <summary>
       /// Selects video or audio resource from the given url. Audio is selected by default.
       /// </summary>
@@ -78,6 +80,19 @@ namespace YoutubeMusicDownloader {
                   };
                   await Console.Out.WriteLineAsync($"{(resource == null ? "ERROR: Not a valid youtube url or youtube refuses to respond." : resource.Uri)}");
                   return;
+
+               case "-p":
+               case "--plain":
+                  isPlainMode = true;
+                  try {
+                     urlInPlainMode = args[i + 1];
+                  } catch (IndexOutOfRangeException) {
+                     Console.WriteLine($"ERROR: Where is the url lil bro.");
+                     PrintHelp();
+                     return;
+                  }
+                  i++;
+                  break;
                default:
                   Console.WriteLine($"ERROR: Invalid flag: {args[i]}");
                   PrintHelp();
@@ -86,30 +101,33 @@ namespace YoutubeMusicDownloader {
          }
 
          List<YouTubeVideo> resources = new List<YouTubeVideo>();
-
-         // If the urls file does not exist, say it to the user and exit.
-         if (!File.Exists(urlsPath)) {
-            Console.WriteLine($"ERROR: The urls file does not exist.");
-            PrintHelp();
-            return;
-         }
-
          List<string> urls = new List<string>();
 
-         // Read urls from file
-         using (StreamReader sr = new StreamReader(urlsPath)) {
-            string line;
-            while ((line = await sr.ReadLineAsync()) != null) {
-               if (!string.IsNullOrWhiteSpace(line))
-                  urls.Add(line);
+         if (!isPlainMode) {
+            // If the urls file does not exist, say it to the user and exit.
+            if (!File.Exists(urlsPath)) {
+               Console.WriteLine($"ERROR: The urls file does not exist.");
+               PrintHelp();
+               return;
             }
-         }
-         
-         // If the urls file is empty, say it to the user and exit.
-         if (urls.Count == 0) {
-            Console.WriteLine($"ERROR: The urls file is empty.");
-            PrintHelp();
-            return;
+
+            // Read urls from file
+            using (StreamReader sr = new StreamReader(urlsPath)) {
+               string line;
+               while ((line = await sr.ReadLineAsync()) != null) {
+                  if (!string.IsNullOrWhiteSpace(line))
+                     urls.Add(line);
+               }
+            }
+
+            // If the urls file is empty, say it to the user and exit.
+            if (urls.Count == 0) {
+               Console.WriteLine($"ERROR: The urls file is empty.");
+               PrintHelp();
+               return;
+            }
+         } else {
+            urls.Add(urlInPlainMode);
          }
 
          List<Task<YouTubeVideo>> getResourceTasks = new List<Task<YouTubeVideo>>();
@@ -191,7 +209,7 @@ namespace YoutubeMusicDownloader {
                return;
             }
          }
-         
+
          byte[] buffer = new byte[128 * 1024]; // 128KB buffer
          int read;
          long totalRead = 0;
@@ -241,7 +259,8 @@ namespace YoutubeMusicDownloader {
          YouTubeVideo highestQualityAudio = null;
          try {
             highestQualityAudio = videos.OrderByDescending(v => v.AudioBitrate).First();
-         } catch (InvalidOperationException) {
+         }
+         catch (InvalidOperationException) {
             // If there is no audio, it throws InvalidOperationException. So we catch it and do nothing.
          }
 
@@ -325,18 +344,18 @@ namespace YoutubeMusicDownloader {
          // Create audio output directory
          if (!Directory.Exists(audioSaveDirectoryPath))
             Directory.CreateDirectory(audioSaveDirectoryPath);
-      
+
          string videoName = Path.GetFileNameWithoutExtension(videoPath);
-      
+
          // Convert video to mp3
          var outputPath = $"{audioSaveDirectoryPath}/{videoName}.mp3";
          using FileStream outputStream = new FileStream(outputPath, FileMode.OpenOrCreate, FileAccess.Write);
-      
+
          using var reader = new MediaFoundationReader(videoPath);
          using var writer = new LameMP3FileWriter(outputStream, reader.WaveFormat, 128);
-      
+
          await reader.CopyToAsync(writer);
-      
+
          lock (progressTexts) {
             progressTexts[index] = $"Converted {GetProgressText(1, videoName)}";
          }
@@ -356,7 +375,7 @@ namespace YoutubeMusicDownloader {
             File.Delete(file);
             Console.WriteLine($"Deleted {Path.GetFileName(file)}");
          }
-      
+
          try {
             Directory.Delete(directory);
             Console.WriteLine($"Deleted temporary video storage directory {directory}");
@@ -368,12 +387,13 @@ namespace YoutubeMusicDownloader {
       }
 
       static void PrintHelp() {
-         Console.WriteLine("Usage: yt2mp3 [-h | --help] [-d audio | video] [-u <path-to-urls-file>] [-s <path-to-save-directory>] [--uri <url>]");
+         Console.WriteLine("Usage: yt2mp3 [-h | --help] [-d audio | video] [-u <path-to-urls-file>] [-s <path-to-save-directory>] [--uri <url>] [-p <url>]");
          Console.WriteLine("-h: Print this help and exit program");
          Console.WriteLine("-d, --download-mode: Download mode. Can be either audio or video. Default is audio.");
          Console.WriteLine("-u, --urls-path: Path to urls file. Default is urls.txt. Format is one url per line. Urls in this file will be downloaded when program runs.");
          Console.WriteLine("-s, --save-directory: Path to the directory to save the files. Default is Downloads folder");
          Console.WriteLine("--uri: Gets the internal youtube uri of the video/audio of given url and exits program. -d must precede this flag if -d is used otherwise -d has no effect. So, in order to get video type \"yt2mp3 -d video --uri <url>\"");
+         Console.WriteLine("-p, --plain: Downloads the given url. This url is the url that you see in search bar. If this flag is used, urls.txt(or whatever you provided with -u) file will be ignored.");
       }
    }
 
