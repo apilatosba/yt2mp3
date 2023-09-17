@@ -41,62 +41,69 @@ namespace YoutubeMusicDownloader {
 
          // Flags
          for (int i = 0; i < args.Length; i++) {
-            switch (args[i]) {
-               case "--help":
-               case "-h":
-                  PrintHelp();
-                  return;
-               case "-d":
-               case "--download-mode":
-                  if (args[i + 1].ToLower() == "audio") {
-                     downloadMode = DownloadMode.Audio;
-                     GetResourceMethod = GetAudioWithHighestQuality;
-                  } else if (args[i + 1].ToLower() == "video") {
-                     downloadMode = DownloadMode.Video;
-                     GetResourceMethod = GetVideoWithHighestQuality;
-                  } else {
-                     Console.WriteLine($"ERROR: Invalid download mode: {args[i + 1]}");
+            try {
+               switch (args[i]) {
+                  case "--help":
+                  case "-h":
                      PrintHelp();
                      return;
-                  }
-                  i++;
-                  break;
-               case "-u":
-               case "--urls-path":
-                  urlsPath = args[i + 1];
-                  i++;
-                  break;
-               case "-s":
-               case "--save-directory":
-                  saveDirectory = args[i + 1];
-                  i++;
-                  break;
-               case "--uri":
-                  var resource = downloadMode switch {
-                     DownloadMode.Audio => await GetAudioWithHighestQuality(args[i + 1]),
-                     DownloadMode.Video => await GetVideoWithHighestQuality(args[i + 1]),
-                     DownloadMode.Unknown => null,
-                     _ => null,
-                  };
-                  await Console.Out.WriteLineAsync($"{(resource == null ? "ERROR: Not a valid youtube url or youtube refuses to respond." : resource.Uri)}");
-                  return;
+                  case "-d":
+                  case "--download-mode":
+                     if (args[i + 1].ToLower() == "audio") {
+                        downloadMode = DownloadMode.Audio;
+                        GetResourceMethod = GetAudioWithHighestQuality;
+                     } else if (args[i + 1].ToLower() == "video") {
+                        downloadMode = DownloadMode.Video;
+                        GetResourceMethod = GetVideoWithHighestQuality;
+                     } else {
+                        Console.WriteLine($"ERROR: Invalid download mode: {args[i + 1]}");
+                        PrintHelp();
+                        return;
+                     }
+                     i++;
+                     break;
+                  case "-u":
+                  case "--urls-path":
+                     urlsPath = args[i + 1];
+                     i++;
+                     break;
+                  case "-s":
+                  case "--save-directory":
+                     saveDirectory = args[i + 1];
+                     i++;
+                     break;
+                  case "--uri":
+                     var resource = downloadMode switch {
+                        DownloadMode.Audio => await GetAudioWithHighestQuality(args[i + 1]),
+                        DownloadMode.Video => await GetVideoWithHighestQuality(args[i + 1]),
+                        DownloadMode.Unknown => null,
+                        _ => null,
+                     };
+                     await Console.Out.WriteLineAsync($"{(resource == null ? "ERROR: Not a valid youtube url or youtube refuses to respond." : resource.Uri)}");
+                     return;
 
-               case "-p":
-               case "--plain":
-                  isPlainMode = true;
-                  try {
-                     urlInPlainMode = args[i + 1];
-                  } catch (IndexOutOfRangeException) {
-                     Console.WriteLine($"ERROR: Where is the url lil bro.");
+                  case "-p":
+                  case "--plain":
+                     isPlainMode = true;
+                     try {
+                        urlInPlainMode = args[i + 1];
+                     }
+                     catch (IndexOutOfRangeException) {
+                        Console.WriteLine($"ERROR: Where is the url lil bro.");
+                        PrintHelp();
+                        return;
+                     }
+                     i++;
+                     break;
+                  default:
+                     Console.WriteLine($"ERROR: Invalid flag: {args[i]}");
                      PrintHelp();
                      return;
-                  }
-                  i++;
-                  break;
-               default:
-                  Console.WriteLine($"ERROR: Invalid flag: {args[i]}");
-                  PrintHelp();
-                  return;
+               }
+            } catch (IndexOutOfRangeException) {
+               Console.WriteLine($"ERROR: You probably didn't specify the value of last flag.");
+               PrintHelp();
+               return;
             }
          }
 
