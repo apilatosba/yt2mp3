@@ -198,14 +198,18 @@ namespace YoutubeMusicDownloader {
          using var request = new HttpRequestMessage(HttpMethod.Head, resource.Uri);
 
          Stream readStream;
+         totalByte = (await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead)).Content.Headers.ContentLength.Value;
          for (int i = 0; ; i++) {
             try {
-               totalByte = (await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead)).Content.Headers.ContentLength.Value;
                readStream = await client.GetStreamAsync(resource.Uri);
                break;
             }
             catch (HttpRequestException e) {
-               if (e.StatusCode == System.Net.HttpStatusCode.Forbidden && i < 8) continue;
+               if (e.StatusCode == System.Net.HttpStatusCode.Forbidden && i < 30) {
+                  progressTexts[index] = $"Youtube refuses to respond. Retrying... {i}";
+                  await Task.Delay(100);
+                  continue;
+               }
 
                lock (progressTexts) {
                   progressTexts[index] = $"ERROR: Couldn't download {resource.Title}. Exception message: {e.Message}";
